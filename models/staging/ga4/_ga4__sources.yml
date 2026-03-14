@@ -1,0 +1,21 @@
+version: 2
+
+sources:
+  - name: ga4
+    database: "{{ var('ga4_database') }}"
+    schema: "{{ var('ga4_schema') }}"
+    description: >
+      Raw GA4 BigQuery export tables. GA4 exports one table per day
+      with the naming convention `events_YYYYMMDD`. The schema contains
+      deeply nested RECORD and REPEATED fields.
+    tables:
+      - name: events
+        identifier: "events_*"
+        description: >
+          GA4 raw event-level export table. Each row is a single event
+          fired by a user. Contains nested event_params, user_properties,
+          items arrays, and device/geo/traffic_source structs.
+        freshness:
+          warn_after: { count: 24, period: hour }
+          error_after: { count: 48, period: hour }
+        loaded_at_field: "timestamp_micros(event_timestamp)"

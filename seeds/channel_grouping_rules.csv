@@ -1,0 +1,16 @@
+source_category,source_pattern,medium_pattern,campaign_pattern,channel_grouping
+search_engine,baidu|bing|duckduckgo|ecosia|google|yahoo|yandex|ask|naver|brave|perplexity|chatgpt|gemini,,,
+social_platform,badoo|facebook|fb|instagram|linkedin|pinterest|reddit|snapchat|tiktok|threads|twitter|x\.com|whatsapp|youtube|bluesky|mastodon,,,
+video_platform,dailymotion|disneyplus|netflix|youtube|vimeo|twitch|hulu|roku,,,
+shopping_platform,alibaba|amazon|google shopping|shopify|etsy|ebay|stripe|walmart,,,
+paid_medium,,^(.*cp.*|ppc|retargeting|paid.*)$,,
+organic_medium,,organic,,
+referral_medium,,referral,,
+email_medium,,email|e-mail|e_mail|e mail,,
+social_medium,,social|social-network|social-media|sm|social network|social media,,
+affiliate_medium,,affiliate,,
+display_medium,,display|banner|expandable|interstitial|cpm,,
+push_medium,,push$|mobile|notification,,
+audio_medium,,audio,,
+cross_network,,,.*cross-network.*,Cross-network
+direct,(direct),(not set)|(none)|(null),,Direct
