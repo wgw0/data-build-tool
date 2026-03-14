@@ -1,0 +1,152 @@
+version: 2
+
+models:
+  - name: stg_ga4__events
+    description: >
+      Flattened GA4 event-level data. Extracts commonly-used event parameters
+      into top-level columns while preserving the original nested arrays for
+      downstream models that need custom param access.
+    columns:
+      - name: event_surrogate_key
+        description: "Surrogate key built from user_pseudo_id + event_timestamp + event_name."
+      - name: event_name
+        description: "The name of the event (e.g., page_view, purchase, add_to_cart)."
+        tests:
+          - not_null
+      - name: event_timestamp
+        description: "Event timestamp converted from microseconds to TIMESTAMP."
+        tests:
+          - not_null
+      - name: event_date
+        description: "Event date as a DATE type."
+        tests:
+          - not_null
+      - name: ga_session_id
+        description: "GA4 session ID extracted from event_params."
+      - name: ga_session_number
+        description: "Session number for the user (1 = first session)."
+      - name: page_location
+        description: "Full page URL from event_params."
+      - name: page_title
+        description: "Page title from event_params."
+      - name: page_referrer
+        description: "HTTP referrer URL."
+      - name: event_source
+        description: "Event-scoped traffic source."
+      - name: event_medium
+        description: "Event-scoped traffic medium."
+      - name: event_campaign
+        description: "Event-scoped campaign name."
+      - name: engagement_time_msec
+        description: "Engagement time in milliseconds for this event."
+      - name: transaction_id
+        description: "Ecommerce transaction ID for purchase events."
+      - name: event_value
+        description: "Monetary value associated with the event."
+      - name: user_id
+        description: "User-provided user ID (if set via setUserId)."
+      - name: user_pseudo_id
+        description: "GA4-generated anonymous user identifier (client ID)."
+        tests:
+          - not_null
+      - name: device_category
+        description: "Device category (desktop, mobile, tablet)."
+      - name: device_os
+        description: "Operating system (Android, iOS, Windows, etc.)."
+      - name: device_browser
+        description: "Browser name (Chrome, Safari, Firefox, etc.)."
+      - name: geo_country
+        description: "User's country based on IP geolocation."
+      - name: geo_city
+        description: "User's city based on IP geolocation."
+      - name: traffic_source_source
+        description: "User-level traffic source (first-touch attribution)."
+      - name: traffic_source_medium
+        description: "User-level traffic medium (first-touch attribution)."
+      - name: platform
+        description: "Platform (web, ios, android)."
+      - name: is_conversion_event
+        description: "Boolean flag indicating if this event is a conversion."
+      - name: ecommerce_purchase_revenue_usd
+        description: "Purchase revenue in USD from the ecommerce struct."
+      - name: ecommerce_transaction_id
+        description: "Transaction ID from the ecommerce struct."
+
+  - name: stg_ga4__event_params
+    description: >
+      Unnested event parameters from the GA4 events table. Each row represents
+      a single key-value pair from the event_params array, with all value types
+      exposed plus a coalesced param_value column.
+    columns:
+      - name: user_pseudo_id
+        description: "GA4 anonymous user identifier."
+        tests:
+          - not_null
+      - name: event_name
+        description: "Name of the event this parameter belongs to."
+        tests:
+          - not_null
+      - name: param_key
+        description: "The parameter key name."
+        tests:
+          - not_null
+      - name: param_value
+        description: "Coalesced parameter value (string fallback)."
+      - name: param_string_value
+        description: "String-typed parameter value."
+      - name: param_int_value
+        description: "Integer-typed parameter value."
+      - name: param_float_value
+        description: "Float-typed parameter value."
+      - name: param_double_value
+        description: "Double-typed parameter value."
+
+  - name: stg_ga4__user_properties
+    description: >
+      Unnested user properties from the GA4 events table. Each row is a single
+      key-value pair from the user_properties array, with the set timestamp
+      indicating when the property was last written.
+    columns:
+      - name: user_pseudo_id
+        description: "GA4 anonymous user identifier."
+        tests:
+          - not_null
+      - name: property_key
+        description: "The user property key name."
+        tests:
+          - not_null
+      - name: property_value
+        description: "Coalesced user property value."
+      - name: property_set_at
+        description: "Timestamp when this user property was last set."
+
+  - name: stg_ga4__items
+    description: >
+      Unnested ecommerce items from the GA4 events table. Each row represents
+      a single item in an ecommerce event (add_to_cart, purchase, etc.) with
+      full item-level detail including categories, pricing, and promotions.
+    columns:
+      - name: user_pseudo_id
+        description: "GA4 anonymous user identifier."
+        tests:
+          - not_null
+      - name: event_name
+        description: "The ecommerce event name."
+        tests:
+          - not_null
+      - name: item_id
+        description: "Product/item SKU or ID."
+      - name: item_name
+        description: "Product/item display name."
+      - name: item_brand
+        description: "Product brand."
+      - name: item_category
+        description: "Primary product category."
+      - name: item_price_usd
+        description: "Item unit price in USD."
+      - name: item_quantity
+        description: "Quantity of this item in the event."
+      - name: item_revenue_usd
+        description: "Revenue from this item in USD."
+      - name: ecommerce_transaction_id
+        description: "Transaction ID linking to the parent purchase."

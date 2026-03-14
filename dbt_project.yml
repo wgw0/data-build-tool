@@ -1,0 +1,41 @@
+name: 'ga4_bigquery'
+version: '1.0.0'
+config-version: 2
+
+profile: 'ga4_bigquery'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+vars:
+  ga4_database: "your-gcp-project-id"
+  ga4_schema: "analytics_123456789"
+  ga4_start_date: "20240101"
+  ga4_conversion_events:
+    - "purchase"
+    - "sign_up"
+    - "generate_lead"
+    - "add_to_cart"
+    - "begin_checkout"
+
+models:
+  ga4_bigquery:
+    staging:
+      ga4:
+        +materialized: view
+        +schema: staging
+    intermediate:
+      ga4:
+        +materialized: ephemeral
+    marts:
+      ga4:
+        +materialized: table
+        +schema: marts

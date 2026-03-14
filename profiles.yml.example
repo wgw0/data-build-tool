@@ -1,0 +1,28 @@
+# profiles.yml.example
+# Copy this file to ~/.dbt/profiles.yml and update with your project details.
+
+ga4_bigquery:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth          # or 'service-account' with keyfile
+      project: "your-gcp-project-id"
+      dataset: "dbt_dev"
+      threads: 4
+      timeout_seconds: 300
+      location: US           # or your BigQuery dataset location
+      priority: interactive
+      retries: 1
+
+    prod:
+      type: bigquery
+      method: service-account
+      project: "your-gcp-project-id"
+      dataset: "dbt_prod"
+      keyfile: "/path/to/your/service-account-key.json"
+      threads: 8
+      timeout_seconds: 300
+      location: US
+      priority: interactive
+      retries: 1

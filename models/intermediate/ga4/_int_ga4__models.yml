@@ -1,0 +1,73 @@
+version: 2
+
+models:
+  - name: int_ga4__sessions
+    description: >
+      Session-level aggregation of GA4 events. Each row represents one session
+      identified by user_pseudo_id + ga_session_id. Contains session duration,
+      engagement metrics, landing/exit pages, traffic source, device/geo,
+      conversion counts, and ecommerce aggregates.
+    columns:
+      - name: session_key
+        description: "Surrogate key for the session (user_pseudo_id + ga_session_id)."
+        tests:
+          - unique
+          - not_null
+      - name: user_pseudo_id
+        description: "GA4 anonymous user identifier."
+        tests:
+          - not_null
+      - name: ga_session_id
+        description: "GA4 session ID from event_params."
+        tests:
+          - not_null
+      - name: session_start_at
+        description: "Timestamp of the first event in the session."
+      - name: session_end_at
+        description: "Timestamp of the last event in the session."
+      - name: session_date
+        description: "Date of the session (from the first event)."
+      - name: session_duration_sec
+        description: "Duration of the session in seconds."
+      - name: is_engaged_session
+        description: "Whether the session had engaged_session_event = 1."
+      - name: is_first_session
+        description: "Whether this is the user's first session (ga_session_number = 1)."
+      - name: landing_page
+        description: "First page_location in the session."
+      - name: exit_page
+        description: "Last page_location in the session."
+      - name: pageview_count
+        description: "Number of page_view events in the session."
+      - name: event_count
+        description: "Total events in the session."
+      - name: conversion_count
+        description: "Number of conversion events in the session."
+      - name: session_revenue_usd
+        description: "Total purchase revenue in USD for the session."
+      - name: device_category
+        description: "Device type (desktop, mobile, tablet)."
+      - name: geo_country
+        description: "User's country."
+
+  - name: int_ga4__session_events
+    description: >
+      Events enriched with session-level context. Each event row is joined
+      to its parent session, providing session duration, landing page, resolved
+      traffic source, and session-level ecommerce context.
+
+  - name: int_ga4__user_stitching
+    description: >
+      Maps each user_pseudo_id to its most recently observed user_id.
+      Used downstream to create a unified user key that bridges anonymous
+      and authenticated user identities.
+    columns:
+      - name: user_pseudo_id
+        description: "GA4 anonymous user identifier."
+        tests:
+          - unique
+          - not_null
+      - name: stitched_user_id
+        description: "Most recent authenticated user_id for this user_pseudo_id."
+        tests:
+          - not_null

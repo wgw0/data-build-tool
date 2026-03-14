@@ -1,0 +1,230 @@
+version: 2
+
+models:
+  - name: fct_ga4__sessions
+    description: >
+      Session-level fact table. One row per GA4 session with full attribution,
+      engagement metrics, conversion counts, and ecommerce aggregates.
+      Partitioned by session_date for cost-efficient querying.
+    columns:
+      - name: session_key
+        description: "Surrogate key (user_pseudo_id + ga_session_id)."
+        tests:
+          - unique
+          - not_null
+      - name: user_pseudo_id
+        description: "GA4 anonymous user identifier."
+        tests:
+          - not_null
+      - name: unified_user_id
+        description: "Unified user key (stitched user_id or user_pseudo_id)."
+        tests:
+          - not_null
+      - name: session_date
+        description: "Date of the session."
+        tests:
+          - not_null
+      - name: session_source
+        description: "Resolved session traffic source."
+      - name: session_medium
+        description: "Resolved session traffic medium."
+      - name: default_channel_grouping
+        description: "GA4 default channel grouping classification."
+      - name: is_engaged_session
+        description: "Whether the session was engaged."
+      - name: session_revenue_usd
+        description: "Total session revenue in USD."
+      - name: purchase_count
+        description: "Number of purchase events in the session."
+      - name: landing_page
+        description: "First page URL in the session."
+
+  - name: fct_ga4__conversions
+    description: >
+      Conversion event fact table. Contains only events matching the
+      ga4_conversion_events variable, enriched with session context
+      and traffic attribution.
+    columns:
+      - name: event_surrogate_key
+        description: "Surrogate key for the event."
+        tests:
+          - not_null
+      - name: event_name
+        description: "Conversion event name."
+        tests:
+          - not_null
+      - name: event_date
+        description: "Date of the conversion event."
+        tests:
+          - not_null
+      - name: unified_user_id
+        description: "Unified user key."
+        tests:
+          - not_null
+      - name: default_channel_grouping
+        description: "Channel grouping for attribution."
+
+  - name: fct_ga4__pageviews
+    description: >
+      Pageview-level fact table. One row per page_view event with
+      time-on-page approximation, session context, and attribution.
+    columns:
+      - name: event_surrogate_key
+        description: "Surrogate key for the pageview event."
+        tests:
+          - not_null
+      - name: event_date
+        description: "Date of the pageview."
+        tests:
+          - not_null
+      - name: unified_user_id
+        description: "Unified user key."
+        tests:
+          - not_null
+      - name: page_location
+        description: "Full page URL."
+      - name: page_title
+        description: "HTML page title."
+      - name: time_on_page_sec
+        description: "Approximate time on page in seconds (based on next pageview)."
+
+  - name: fct_ga4__ecommerce
+    description: >
+      Item-level ecommerce fact table. One row per item per ecommerce event,
+      covering the full shopping funnel from browse to purchase/refund.
+    columns:
+      - name: ecommerce_event_key
+        description: "Surrogate key for the item-event combination."
+        tests:
+          - unique
+          - not_null
+      - name: event_name
+        description: "Ecommerce event name."
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - view_item_list
+                - view_item
+                - select_item
+                - add_to_cart
+                - remove_from_cart
+                - view_cart
+                - begin_checkout
+                - add_shipping_info
+                - add_payment_info
+                - purchase
+                - refund
+      - name: item_id
+        description: "Product SKU or ID."
+      - name: item_name
+        description: "Product display name."
+      - name: item_price_usd
+        description: "Item unit price in USD."
+      - name: item_quantity
+        description: "Quantity of items."
+      - name: funnel_step_number
+        description: "Numeric funnel step (1=Browse, 9=Purchase, 10=Refund)."
+      - name: funnel_step_name
+        description: "Human-readable funnel step name."
+
+  - name: dim_ga4__users
+    description: >
+      User dimension table. One row per unified user with first/last seen dates,
+      lifetime engagement metrics, first-touch attribution, and user segmentation.
+    columns:
+      - name: unified_user_id
+        description: "Unified user key (stitched user_id or user_pseudo_id)."
+        tests:
+          - not_null
+      - name: user_pseudo_id
+        description: "GA4 anonymous user identifier."
+        tests:
+          - unique
+          - not_null
+      - name: first_seen_at
+        description: "Timestamp of the user's first event."
+      - name: last_seen_at
+        description: "Timestamp of the user's most recent event."
+      - name: lifetime_session_count
+        description: "Total number of sessions."
+      - name: lifetime_purchase_count
+        description: "Total number of purchases."
+      - name: lifetime_revenue_usd
+        description: "Total revenue from this user in USD."
+      - name: first_default_channel_grouping
+        description: "Channel grouping of user's first-touch source."
+      - name: user_segment
+        description: "User classification (Customer, Converter, Returning Visitor, New Visitor)."
+        tests:
+          - accepted_values:
+              values:
+                - Customer
+                - Converter
+                - Returning Visitor
+                - New Visitor
+
+  - name: dim_ga4__traffic_sources
+    description: >
+      Traffic source dimension table. One row per unique source/medium/campaign
+      combination with default channel grouping classification.
+    columns:
+      - name: traffic_source_key
+        description: "Surrogate key for the source/medium/campaign."
+        tests:
+          - unique
+          - not_null
+      - name: source
+        description: "Traffic source (e.g., google, facebook)."
+        tests:
+          - not_null
+      - name: medium
+        description: "Traffic medium (e.g., organic, cpc, referral)."
+        tests:
+          - not_null
+      - name: campaign
+        description: "Campaign name."
+        tests:
+          - not_null
+      - name: default_channel_grouping
+        description: "GA4 default channel grouping."
+        tests:
+          - not_null
+
+  - name: rpt_ga4__daily_overview
+    description: >
+      Daily KPI rollup report. One row per day with aggregate metrics for
+      users, sessions, pageviews, engagement, conversions, and ecommerce.
+      Designed for executive dashboards and daily monitoring.
+    columns:
+      - name: report_date
+        description: "The reporting date."
+        tests:
+          - unique
+          - not_null
+      - name: total_users
+        description: "Count of distinct unified users."
+      - name: new_users
+        description: "Count of users with first session on this date."
+      - name: total_sessions
+        description: "Total session count."
+      - name: engaged_sessions
+        description: "Count of engaged sessions."
+      - name: engagement_rate
+        description: "Engaged sessions / total sessions."
+      - name: bounce_rate
+        description: "Non-engaged sessions / total sessions."
+      - name: total_pageviews
+        description: "Sum of pageview events."
+      - name: avg_session_duration_sec
+        description: "Average session duration in seconds."
+      - name: total_conversions
+        description: "Sum of conversion events."
+      - name: total_revenue_usd
+        description: "Sum of purchase revenue in USD."
+      - name: total_purchases
+        description: "Count of purchase events."
+      - name: avg_order_value_usd
+        description: "Average order value (revenue / purchases)."
+      - name: purchase_conversion_rate
+        description: "Purchasing sessions / total sessions."
